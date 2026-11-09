@@ -1,7 +1,7 @@
-# Proyecto MATI: Twitch portugués
+# Proyecto MATI: estructura de redes de Twitch
 
-El análisis guiado está en `Proyecto_Twitch_MATI.ipynb`. Usa los CSV de `twitch_gamers/`, filtra usuarios con `language == PT` y conserva las amistades entre dos usuarios PT. La primera sección guarda la red derivada en `datos/twitch_PT_nodes.csv` y `datos/twitch_PT_edges.csv`.
+El análisis guiado está en `Proyecto_Twitch_MATI.ipynb`. Usa los CSV de `twitch_gamers/`, filtra usuarios por `language` y compara los subgrafos de cada idioma. También mide la afinidad de las amistades por idioma en la red completa.
 
-La carpeta PT contiene 2.536 usuarios. El filtrado de aristas produce 42.952 amistades mutuas entre esos usuarios; 90 usuarios no tienen vecinos PT y se mantienen como vértices aislados. El cuaderno vuelve a calcular y mostrar estas cifras al ejecutarse.
+El filtro portugués está en `datos/twitch_PT_nodes.csv` y `datos/twitch_PT_edges.csv`. La comparación entre idiomas se guarda en `datos/comparativa_idiomas.csv`; la mezcla global, en `datos/afinidad_idioma.csv`.
 
-Abre el notebook en SageMath/Jupyter y ejecuta las celdas de arriba abajo. La carpeta `twitch_gamers/` debe permanecer en la raíz.
+Abre el notebook en SageMath/Jupyter y ejecútalo de arriba abajo. Conserva `twitch_gamers/` en la raíz.
