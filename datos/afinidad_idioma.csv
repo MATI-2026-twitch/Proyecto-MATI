@@ -1,6 +1,6 @@
-measure,value,description
-total_edges,6797557,All undirected mutual-follower edges in source graph
-within_language_edges,6117759,Edges whose endpoints have the same language label
-observed_within_language_fraction,0.89999378,Share of edges with equal endpoint labels
-expected_random_mixing_fraction,0.73305808,Expected under random endpoint pairing preserving language stub shares
-categorical_assortativity,0.62536336,Newman assortativity coefficient for language labels
+measure,value
+all_edges,6797557
+same_language_edges,6117759
+observed_same_language_fraction,6117759/6797557
+expected_random_mixing_fraction,67744508721463/92413562336498
+language_assortativity,15427122308063/24669053615035
