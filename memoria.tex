@@ -1,0 +1,408 @@
+\documentclass[11pt,a4paper]{article}
+
+% ==============================================================================
+% COMPATIBILIDAD AUTOMÁTICA CON PDFLATEX (Overleaf / TeXLive) Y XELATEX
+% ==============================================================================
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[utf8]{inputenc}
+  \usepackage[T1]{fontenc}
+  \usepackage{lmodern}
+\else
+  \usepackage{fontspec}
+\fi
+
+\usepackage[spanish,es-tabla]{babel}
+\usepackage[a4paper,top=2.3cm,bottom=2.3cm,left=2.3cm,right=2.3cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{float}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{microtype}
+\usepackage[hidelinks,hypertexnames=false]{hyperref}
+
+% ==============================================================================
+% COLORES CORPORATIVOS UNIVERSIDAD DE SEVILLA
+% ==============================================================================
+\definecolor{burdeosUS}{HTML}{9D2235} % Pantone 201 CVC
+\definecolor{alberoUS}{HTML}{FFC72C}  % Pantone 123 CVC
+\definecolor{grisTexto}{HTML}{333333}
+
+% Estilo de títulos de secciones
+\titleformat{\section}
+  {\large\bfseries\color{burdeosUS}}{\thesection.}{0.6em}{}[\color{alberoUS}\titlerule]
+\titleformat{\subsection}
+  {\normalsize\bfseries\color{burdeosUS}}{\thesubsection.}{0.5em}{}
+
+% Encabezado y pie de página
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{gray}Teoría de Grafos aplicada a Twitch — MATI}
+\fancyhead[R]{\small\color{gray}Universidad de Sevilla, II - TI}
+\fancyfoot[C]{\small\color{gray}\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% Ajustes tipográficos para evitar cortes feos y desbordes de margen
+\setlength{\parskip}{0.45em}
+\setlength{\parindent}{0pt}
+\setlength{\emergencystretch}{3em}
+\clubpenalty=10000
+\widowpenalty=10000
+\displaywidowpenalty=10000
+
+% ==============================================================================
+% INICIO DEL DOCUMENTO
+% ==============================================================================
+\begin{document}
+
+% --- PÁGINA 1: PORTADA OFICIAL ---
+\begin{titlepage}
+    \centering
+    \vspace*{1cm}
+
+    {\large \textsc{Universidad de Sevilla} \par}
+    \vspace{0.2cm}
+    {\normalsize Escuela Técnica Superior de Ingeniería Informática \par}
+    {\normalsize Grado en Ingeniería Informática -- Tecnología Informática \par}
+
+    \vspace{1.2cm}
+    {\color{burdeosUS}\rule{\linewidth}{2.2pt}}
+    \vspace{0.8cm}
+
+    {\LARGE \bfseries \color{burdeosUS}
+    Teoría de Grafos aplicada a Twitch:\\[0.3em]
+    Centralidad, Comunidades y Evolución Estructural \par}
+
+    \vspace{0.5cm}
+    {\large \itshape Memoria del proyecto de asignatura \par}
+
+    \vspace{0.8cm}
+    {\color{alberoUS}\rule{0.6\linewidth}{2pt}}
+
+    \vspace{2.2cm}
+
+    {\large \textbf{Asignatura} \par}
+    \vspace{0.2cm}
+    {Matemática Aplicada a las Tecnologías de la Información (MATI) \par}
+
+    \vspace{1.6cm}
+
+    {\large \textbf{Autores} \par}
+    \vspace{0.4cm}
+    \begin{tabular}{c}
+        Francisco José Caballero Mesa \\[0.25em]
+        Andrea Cárdenas Mayoral \\[0.25em]
+        Marco Granja Quinto \\[0.25em]
+        Moisés Guillermo Godoy Nava \\[0.25em]
+        Alberto López López
+    \end{tabular}
+
+    \vfill
+
+    {\color{burdeosUS}\rule{0.4\linewidth}{0.8pt}}\\[0.5em]
+    {\large Sevilla, 30 de noviembre de 2026 \par}
+\end{titlepage}
+
+% --- PÁGINA 2: ÍNDICE ---
+\pagenumbering{roman}
+\tableofcontents
+\newpage
+\pagenumbering{arabic}
+
+% ==============================================================================
+\section{Introducción, artículo de partida y objetivos}
+% ==============================================================================
+
+En la sociedad actual existen numerosas redes sociales en las que distintos usuarios retransmiten contenido que millones de personas consumen en tiempo real. Entre ellas destaca \textbf{Twitch}, una plataforma de retransmisión en directo que en los últimos años ha experimentado un enorme crecimiento en audiencia, pasando de ser un nicho centrado en los videojuegos a convertirse en uno de los principales espacios de entretenimiento digital. Al tratarse de un ecosistema donde interactúan creadores y espectadores a gran escala, resulta especialmente interesante analizar sus relaciones mediante la teoría de grafos para entender cómo se concentra la popularidad, cómo se forman comunidades y qué usuarios articulan la red.
+
+El punto de partida de este trabajo es el artículo \textit{Twitch Gamers: a Dataset for Evaluating Proximity Preserving and Structural Role-based Node Embeddings} (Rozemberczki y Sarkar, 2021), publicado en la colección SNAP de la Universidad de Stanford. Dicho conjunto de datos recoge las relaciones de seguimiento mutuo entre $168\,114$ cuentas de Twitch etiquetadas en $21$ idiomas (con $6\,797\,557$ enlaces), junto con atributos reales de cada canal: visualizaciones acumuladas, antigüedad, marca de contenido adulto, estatus de afiliado y cuentas inactivas.
+
+A partir de este estudio base, planteamos tres bloques de preguntas de investigación:
+\begin{enumerate}[leftmargin=*, itemsep=2pt]
+  \item \textbf{Topología interna y centralidad:} ¿Cómo se reparte la popularidad dentro de una comunidad lingüística? ¿Qué usuarios resultan más importantes según distintas medidas de centralidad? ¿Cómo resiste la red ante fallos aleatorios frente a ataques dirigidos?
+  \item \textbf{Dimensión lingüística:} ¿Cambia la estructura de la red según el idioma? ¿Actúa el idioma como una frontera natural entre comunidades?
+  \item \textbf{Evolución temporal y cambio en la definición de arista:} Dado que Twitch retiró la lista pública de amigos y restringió el acceso a los seguidores, ¿cómo cambia la topología al pasar de una red de seguimiento mutuo (2018) a redes construidas por audiencia compartida en directo (Kaggle Live $\sim 2019$ y GitHub Overlap 2021--2022)?
+\end{enumerate}
+
+Desde el punto de vista metodológico, hemos seguido un flujo de trabajo riguroso: antes de calcular cualquier métrica, programamos comprobaciones previas de hipótesis (simplicidad del grafo, conexidad, alineación de índices en matrices) para evitar errores silenciosos o resultados sin sentido. Todo el análisis computacional se ha realizado en \textit{SageMath}, apoyándonos puntualmente en \textit{NetworkX} ---la librería de Python para análisis de redes complejas que se integra directamente con \textit{SageMath}--- para acelerar algoritmos como la centralidad de autovector o la detección de comunidades, y se completa con demostraciones constructivas y una aplicación interactiva divulgativa.
+
+% ==============================================================================
+\section{Modelización matemática y comprobaciones previas}
+% ==============================================================================
+
+Modelamos la red de seguimiento mutuo de SNAP 2018 como un grafo simple no dirigido $G = (V, A)$, donde cada vértice $v \in V$ representa una cuenta y cada arista $\{u,v\} \in A$ indica una relación de seguimiento recíproco (evitando llamarla «amistad» en sentido personal). Analizar de forma exacta los $168\,114$ vértices globales resulta computacionalmente prohibitivo para algoritmos de orden $O(n \cdot m)$ o espectrales en un ordenador estándar. Por ello, extraemos dos subgrafos inducidos completos e independientes de distinta escala para contrastar su estructura: \textbf{Portugal (\texttt{PT})} y \textbf{España (\texttt{ES})}, filtrados mediante la etiqueta \texttt{language} (que indica el idioma de emisión, no necesariamente la nacionalidad).
+
+Antes de lanzar algoritmos de distancias o centralidad, aplicamos un protocolo de comprobaciones previas sobre cada uno de los dos subgrafos:
+\begin{itemize}[leftmargin=*, itemsep=2pt]
+  \item \textbf{Grafo simple y Lema del apretón de manos:} Comprobamos computacionalmente que no existen lazos ni aristas múltiples (\texttt{has\_loops() == False}, \texttt{has\_multiple\_edges() == False}) y que se cumple exactamente $\sum_{v \in V} \delta(v) = 2|A|$, tanto en \texttt{PT} ($85\,904 = 2 \times 42\,952$) como en \texttt{ES} ($171\,786 = 2 \times 85\,893$).
+  \item \textbf{Dispersión y estructura de datos:} La densidad observada es muy baja: $1,336\%$ en \texttt{PT} y $0,529\%$ en \texttt{ES}. Al tratarse de grafos dispersos ($|A| \ll n^2$), representarlos mediante \textbf{listas de adyacencia} ($O(n + |A|)$) evita malgastar memoria. Del mismo modo, para el cálculo espectral de Bonacich en \texttt{ES} ($5\,524$ nodos), emplear matrices dispersas en formato CSC (\texttt{scipy.sparse}) evita reservar unos $244$\,MB de ceros y resuelve el sistema lineal en menos de un segundo.
+  \item \textbf{Conexidad y Teorema de Whitney:} Al comprobar \texttt{is\_connected()}, detectamos que \textbf{ninguno de los dos subgrafos es conexo}, pues el subgrafo \texttt{PT} tiene $93$ componentes conexas ($90$ vértices aislados y dos parejas aisladas) y el subgrafo \texttt{ES} tiene $169$ componentes ($161$ aislados). Esos usuarios aislados no carecen de enlaces en el Twitch global, sino que seguían a cuentas de otros idiomas y sus aristas desaparecieron al recortar el subgrafo. Al tener grado mínimo $\delta(G) = 0$, por el \textbf{Teorema de Whitney} ($\kappa(G) \le \lambda(G) \le \delta(G)$) podemos garantizar $\kappa(G) = \lambda(G) = 0$. Para evitar distancias infinitas, restringimos las métricas basadas en caminos a la \textbf{componente conexa gigante propia de cada subgrafo}: $G_{\text{gig, PT}}$ agrupa al $96,29\%$ de \texttt{PT} ($2\,442$ nodos) y $G_{\text{gig, ES}}$ al $96,93\%$ de \texttt{ES} ($5\,524$ nodos). Dentro de $G_{\text{gig, PT}}$ aparecen $108$ vértices de corte y $136$ aristas puente ($252$ y $295$ en $G_{\text{gig, ES}}$), verificándose en ambos $\kappa(G_{\text{gig}}) = \lambda(G_{\text{gig}}) = \delta(G_{\text{gig}}) = 1$.
+\end{itemize}
+
+\begin{table}[H]
+\centering
+\caption{Principales medidas topológicas de las redes de Portugal (\texttt{PT}) y España (\texttt{ES}) en 2018.}
+\label{tab:pt_es}
+\small
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{Medida topológica} & \textbf{Portugal (\texttt{PT} 2018)} & \textbf{España (\texttt{ES} 2018)} \\
+\midrule
+Vértices $|V|$ & $2\,536$ & $5\,699$ \\
+Aristas internas $|A|$ & $42\,952$ & $85\,893$ \\
+Densidad & $1,336\%$ & $0,529\%$ \\
+Grado medio (y mediana) & $33,87$ (mediana $17,0$) & $30,14$ (mediana $14,0$) \\
+Grado máximo (mayor \textit{hub}) & $880$ & $1\,131$ \\
+Coeficiente de variación del grado ($CV$) & $1,838$ & $1,934$ \\
+Usuarios aislados (componentes totales) & $90$ ($93$ comp.) & $161$ ($169$ comp.) \\
+Componente gigante $G_{\text{gig}}$ & $2\,442$ ($96,29\%$) & $5\,524$ ($96,93\%$) \\
+Vértices de corte y puentes en $G_{\text{gig}}$ & $108$ vértices y $136$ puentes & $252$ vértices y $295$ puentes \\
+Radio y diámetro de $G_{\text{gig}}$ & Radio $4$, diámetro $7$ & Radio $4$, diámetro $8$ \\
+Tamaño del Centro $Z(G_{\text{gig}})$ & $144$ vértices & $4$ vértices \\
+Distancia media estimada (BFS, $150$ orígenes) & $2,641$ saltos & $2,872$ saltos \\
+Clustering real (frente a modelo \texttt{GNP}) & $0,3031$ ($22,3\times$ el azar) & $0,2247$ ($40,9\times$ el azar) \\
+Usuarios afectados por la Paradoja de la Amistad & $93,9\%$ & $95,0\%$ \\
+Comunidades (\textit{greedy}) y modularidad $Q$ & $15$ ($Q = 0,2529$) & $31$ ($Q = 0,3862$) \\
+Número de triángulos ($C_3$) & $262\,853$ & $400\,497$ \\
+Clique máximo en el núcleo (Top 150) & $K_{18}$ & $K_{18}$ \\
+Spearman grado vs.\ \texttt{views} & $\rho = +0,5994$ & $\rho = +0,5627$ \\
+Spearman grado vs.\ \texttt{dead\_account} & $\rho = -0,2061$ & $\rho = -0,1294$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ==============================================================================
+\section{Distribución de grados, Efecto Mateo y modelos generadores}
+% ==============================================================================
+
+La Tabla~\ref{tab:pt_es} muestra una fuerte desigualdad en cómo se reparten las conexiones. En ambas redes el grado medio duplica a la mediana: en \texttt{PT} la media es $33,87$ frente a una mediana de $17,0$, y en \texttt{ES} la media es $30,14$ frente a una mediana de $14,0$. El coeficiente de variación roza el valor $2$ ($CV = 1,838$ en \texttt{PT} y $1,934$ en \texttt{ES}), reflejando la presencia de grandes concentradores (\textit{hubs}) que alcanzan hasta $880$ enlaces internos en \texttt{PT} y $1\,131$ en \texttt{ES}.
+
+\subsection{Elección de modelos y ajuste por mínimos cuadrados}
+Al representar en un gráfico el grado de cada usuario frente al número de usuarios con ese grado (Figura~\ref{fig:ajustes_es}), se observa una caída muy brusca al principio seguida de una cola larga y pegada al eje horizontal. Esto descarta de inmediato un modelo lineal, ya que las frecuencias no decrecen a ritmo constante, y nos lleva a probar familias de funciones decrecientes vistas en clase: primero un \textbf{modelo exponencial} ($a e^{bx}$), luego una \textbf{ley de potencias pura} ($a x^b$) y finalmente una \textbf{ley de potencias desplazada} ($a |x - c|^b$).
+
+Para ajustar los parámetros usamos \texttt{find\_fit} en \textit{SageMath}, que minimiza el error cuadrático total ($\text{SSE}$). Elevar cada diferencia al cuadrado evita que los errores positivos y negativos se cancelen entre sí y penaliza más las desviaciones grandes. En el modelo desplazado introducimos el valor absoluto $|x - c|^b$ y un punto de partida coherente (\texttt{initial\_guess}) para impedir que, durante las pruebas internas del optimizador, una base negativa elevada a un exponente fraccionario rompa la ejecución con un error de dominio. Los errores cuadráticos obtenidos son:
+\begin{itemize}[leftmargin=*, itemsep=2pt]
+  \item \textbf{Portugal (\texttt{PT}):} Potencial Puro $\text{SSE} = 14\,984,01$ ($b = -0,629$); Exponencial $\text{SSE} = 3\,469,86$; \textbf{Potencial Desplazado} $\text{SSE} = \mathbf{2\,677,55}$ ($a = 3,90\times 10^6$, $b = -2,825$, $c = -39,29$).
+  \item \textbf{España (\texttt{ES}):} Potencial Puro $\text{SSE} = 121\,535,01$; Exponencial $\text{SSE} = 8\,285,93$; \textbf{Potencial Desplazado} $\text{SSE} = \mathbf{4\,443,64}$ ($a = 3,31\times 10^8$, $b = -3,642$, $c = -44,17$).
+\end{itemize}
+
+Aunque \textbf{exponencial} sigue bien la caída inicial, baja demasiado rápido hacia cero y es incapaz de explicar la cola larga donde viven los \textit{hubs}. Por otra parte, el \textbf{potencial puro} dispara su error porque exige una asíntota vertical pegada a $k = 1$, mientras que en nuestros subgrafos inducidos los grados bajos ($k < 15$) aparecen achatados al haberse perdido los enlaces con otros idiomas. Ambos problemas se resuelven al usar el modelo del \textbf{potencial desplazado}, pues el parámetro $c$ corrige el desfase de los grados pequeños y mantiene la cola pesada, consiguiendo el menor error cuadrático y confirmando el \textbf{Efecto Mateo} (unos pocos usuarios acumulan muchísimas conexiones). Conviene añadir, siguiendo a Clauset, Shalizi y Newman (2009), que un ajuste por mínimos cuadrados es una herramienta descriptiva útil, pero no basta por sí sola para afirmar con rigor estadístico que la red siga una ley de potencias estricta sin contrastes de máxima verosimilitud sobre la cola.
+
+\begin{figure}[H]
+  \centering
+  \begin{subfigure}[b]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{datos/salidas/grafica_ES_1_loglog.png}
+    \caption{Distribución de grados en escala log-log.}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[b]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{datos/salidas/grafica_ES_2_ajustes.png}
+    \caption{Ajustes por mínimos cuadrados (\texttt{find\_fit}).}
+  \end{subfigure}
+  \caption{Análisis de la distribución de grados en el subgrafo inducido de España (\texttt{ES} 2018).}
+  \label{fig:ajustes_es}
+\end{figure}
+
+\subsection{Paradoja de la Amistad y comparativa con modelos aleatorios}
+\textbf{La Paradoja de la Amistad se cumple de forma abrumadora} en las dos redes analizadas: en \texttt{PT} el \textbf{$93,9\%$} de los usuarios tiene menos conexiones mutuas que el promedio de sus propios contactos, y en \texttt{ES} la cifra asciende al \textbf{$95,0\%$}. Esto significa que más de $9$ de cada $10$ usuarios de Twitch están menos conectados que la media de la gente a la que siguen. Matemáticamente es una consecuencia directa de la desigualdad de Cauchy--Schwarz ($\langle \delta_{\text{vecinos}} \rangle = \bar{\delta} + \sigma_\delta^2 / \bar{\delta}$): al existir una varianza de grados ($\sigma_\delta^2$) tan elevada, los grandes \textit{hubs} aparecen en la lista de contactos de cientos de personas distintas y empujan hacia arriba la media vecinal de casi toda la red.
+
+Para comprobar si esta estructura podría surgir al azar, generamos cuatro modelos sintéticos con el mismo número de vértices y el mismo grado medio ($m_{\text{add}} = 17$ en \texttt{PT} y $m_{\text{add}} = 15$ en \texttt{ES}): Erdős--Rényi (\texttt{GNM} y \texttt{GNP}), Barabási--Albert (\texttt{BA}) y Holme--Kim (\texttt{HK}, con probabilidad $0,5$ de cierre de triángulos). En \texttt{ES}, \texttt{GNM} y \texttt{GNP} forman una campana estrecha alrededor de la media, sin \textit{hubs} y con un \textit{clustering} casi nulo ($0,0054$ y $0,0055$). El modelo \texttt{BA} introduce conexión preferencial y genera una cola larga, pero apenas crea triángulos ($0,0224$). Finalmente, \textbf{Holme--Kim} ($0,0871$ en \texttt{ES} y $0,1101$ en \texttt{PT}) es el que más se acerca a la red real ($0,2247$ y $0,3031$) al combinar \textit{hubs} y cierre de triángulos, aunque presenta un pico artificial en su grado mínimo obligatorio $k = m_{\text{add}}$ (Figura~\ref{fig:modelos_es}).
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.72\textwidth]{datos/salidas/grafica_ES_3_modelos.png}
+  \caption{Perfil de grados de Twitch \texttt{ES} 2018 frente a los modelos \texttt{GNM}, \texttt{GNP}, Barabási--Albert y Holme--Kim ($m = 15$).}
+  \label{fig:modelos_es}
+\end{figure}
+
+% ==============================================================================
+\section{Mundo Pequeño, Centro, las 5 Centralidades y Robustez}
+% ==============================================================================
+
+\subsection{Invariancia del Mundo Pequeño y diferencia entre Centro y Cercanía}
+Al comparar \texttt{PT} con \texttt{ES}, se puede verificar el fenómeno de \textbf{Mundo Pequeño} (Watts y Strogatz, 1998). Aunque \texttt{ES} multiplica por $2,25$ el número de usuarios de \texttt{PT} y su densidad cae a menos de la mitad, la distancia media estimada por búsqueda en anchura (BFS desde $150$ orígenes reproducibles) apenas sube de $2,641$ a $2,872$ saltos y el diámetro pasa de $7$ a $8$. Combinando distancias igual de cortas que un grafo aleatorio (\texttt{GNP}: $2,61$) con un \textit{clustering} $22,3\times$ (\texttt{PT}) y $40,9\times$ (\texttt{ES}) superior al azar, se confirma la existencia de atajos estructurales y fuerte agrupamiento local.
+
+En ambas componentes gigantes se verifica la desigualdad métrica $\text{rad}(G) \le \text{diam}(G) \le 2\,\text{rad}(G)$: en \texttt{PT} resulta $4 \le 7 \le 8$, mientras que en \texttt{ES} se alcanza la igualdad extrema $4 \le 8 = 2 \cdot 4$. Además, el caso español ofrece una ilustración excelente de la diferencia conceptual entre \textbf{Centro} y \textbf{Cercanía}: su centro $Z(G_{\text{gig, ES}})$ se reduce a solo \textbf{$4$ vértices} (\texttt{25951}, \texttt{143506}, \texttt{49942} y \texttt{70486}), por lo que \textbf{$4$ de los $5$ usuarios con mayor Cercanía (\texttt{31958}, \texttt{151558}, \texttt{151200} y \texttt{112472}) quedan fuera del Centro} al tener excentricidad $5$. Mientras el Centro optimiza el \textit{peor caso} (basta un único vértice periférico alejado para penalizar la excentricidad), la Cercanía optimiza la distancia \textit{promedio} al resto de la red.
+
+\subsection{Las cinco centralidades y validación con atributos reales}
+Al calcular las cinco centralidades (\textbf{Grado, Cercanía, Intermediación, Autovector y Bonacich}) con los metadatos reales de SNAP 2018 y compararlos, se puede confirmar que la estructura topológica predice el desempeño real de los canales:
+\begin{itemize}[leftmargin=*, itemsep=2pt]
+  \item \textbf{Correlación de Spearman:} El grado topológico correlaciona con fuerza con las visualizaciones acumuladas (\texttt{views}: $\rho = +0,5994$ en \texttt{PT} y $\rho = +0,5627$ en \texttt{ES}, $p < 10^{-200}$) y de forma negativa con el abandono (\texttt{dead\_account}: $\rho = -0,2061$ en \texttt{PT} y $-0,1294$ en \texttt{ES}).
+  \item \textbf{Líderes frente a conectores puros en \texttt{PT}:} El nodo \texttt{122266} (grado $880$, $32,67$\,M de visitas) lidera en Grado, Cercanía ($0,5806$), Autovector ($0,1678$) y Bonacich ($0,2047$), mientras \texttt{161540} (grado $849$, $36,93$\,M de visitas) encabeza la Intermediación ($0,0889$). Sin embargo, la Intermediación rescata un \textbf{puente estructural oculto}: el usuario \texttt{102521} entra en el Top~10 de puentes ($0,0181$) con solo $172$ contactos y sin estatus de afiliado.
+  \item \textbf{El acierto de Bonacich en \texttt{ES}:} Los dos mayores \textit{hubs} por grado e intermediación (\texttt{25951} con $1\,131$ contactos y \texttt{31958} con $1\,098$) desaparecen del Top~5 de \textbf{Autovector}, liderado por \texttt{151558} ($0,1614$). Al calcular la \textbf{centralidad de Bonacich} resolviendo $(I - \alpha A)\mathbf{c} = A\mathbf{1}$ con $\alpha = 0,5/\lambda_{\max} = 0,00436$ ($\lambda_{\max} = 114,77$), el primer puesto recae exactamente en \texttt{151558} ($0,1764$), que resulta ser el canal con mayor audiencia real del Top~5 español ($30,55$\,M de visitas frente a los $24,71$\,M de \texttt{25951} y $18,20$\,M de \texttt{31958}).
+\end{itemize}
+
+\subsection{Experimento de robustez: fallo aleatorio frente a ataque dirigido}
+Para evaluar la resiliencia estructural de ambas redes, simulamos la eliminación de $20$ nodos en $G_{\text{gig}}$ bajo tres escenarios:
+\begin{itemize}[leftmargin=*, itemsep=2pt]
+  \item \textbf{Fallo aleatorio ($20$ nodos):} En \texttt{ES}, la red ni siquiera se desconecta (permanece en $1$ única componente de $5\,504$ nodos); en \texttt{PT} apenas se fragmenta en $3$ componentes ($2\,420$ nodos en la gigante).
+  \item \textbf{Ataque al núcleo (Top~20 Autovector):} Desconecta $27$ componentes en \texttt{ES} ($5\,478$ en la gigante) y $34$ en \texttt{PT} ($2\,387$).
+  \item \textbf{Ataque a puentes (Top~20 Intermediación):} Multiplica el daño hasta \textbf{$54$ componentes en \texttt{ES}} ($5\,451$ en la gigante) y \textbf{$36$ en \texttt{PT}} ($2\,386$).
+\end{itemize}
+Esto confirma el comportamiento típico de las redes heterogéneas: alta tolerancia a fallos aleatorios, núcleo muy redundante y vulnerabilidad concentrada en los puentes periféricos que conectan las ramas colgadas de los vértices de corte.
+
+% ==============================================================================
+\section{Comunidades, cliques y complejidad computacional}
+% ==============================================================================
+
+La presencia de $262\,853$ triángulos ($C_3$) en \texttt{PT} y $400\,497$ en \texttt{ES} demuestra de forma directa que ninguna de las dos redes es bipartita ($\chi(G) > 2$). Encontrar el clique máximo global es un problema \textbf{NP-Completo} (reducible en tiempo polinomial desde \texttt{3-SAT}); por ello acotamos la búsqueda exacta al núcleo de los $150$ vértices de mayor grado, hallando en ambos idiomas un subgrafo completo de tamaño \textbf{$K_{18}$}. Este hallazgo aporta dos consecuencias teóricas inmediatas:
+\begin{enumerate}[leftmargin=*, itemsep=2pt]
+  \item El \textbf{número cromático} cumple la cota inferior $\chi(G) \ge \omega(G) \ge 18$.
+  \item Al contener $K_5$ como subgrafo, el \textbf{Teorema de Kuratowski} garantiza que ninguno de los grafos es plano.
+\end{enumerate}
+
+Respecto a la estructura mesoscópica, la maximización voraz (\textit{greedy}) de la modularidad sobre cada componente gigante particiona \texttt{PT} en \textbf{$15$ comunidades} ($Q = 0,2529$) y \texttt{ES} en \textbf{$31$ comunidades} ($Q = 0,3862$), lo que refleja subculturas temáticas mucho más diferenciadas dentro de la comunidad hispana.
+
+% ==============================================================================
+\section{Preguntas de investigación: idiomas y evolución 2018--2022}
+% ==============================================================================
+
+\subsection{¿Cambia la estructura según el idioma? (Los 21 idiomas de SNAP)}
+Al analizar los $6\,797\,557$ enlaces de la red global de 2018, comprobamos que exactamente el \textbf{$90,00\%$} conecta dos usuarios del mismo idioma, frente al \textbf{$73,31\%$} esperado bajo mezcla aleatoria. El coeficiente de \textbf{assortatividad de Newman} vale \textbf{$r = 0,6254$}, lo que confirma una fuerte homofilia lingüística: el idioma actúa como frontera comunitaria natural. La tabla global de los $21$ idiomas ratifica además el efecto escala inverso entre tamaño y densidad: el inglés (\texttt{EN}, $124\,411$ usuarios) presenta la menor densidad ($0,071\%$), frente a comunidades medianas muy cohesionadas como \texttt{ZH} ($2\,828$ usuarios, $1,698\%$) o \texttt{PT} ($1,336\%$), mientras la etiqueta residual \texttt{OTHER} ($1\,429$ usuarios, $1\,250$ aislados, $0,020\%$) no forma comunidad alguna.
+
+\subsection{Evolución temporal y cambio de paradigma de arista (2018--2022)}
+Tras la eliminación de la función de amigos en Twitch (2022) y el cierre público de las listas de seguidores (2023), los datos modernos se construyen partiendo de un \textbf{grafo bipartito} $G_{\text{bip}} = (U \cup S, E)$ entre espectadores y \textit{streamers}, proyectándolo sobre el conjunto de canales $S$: existe una arista entre dos \textit{streamers} si comparten audiencia activa en su chat. Comparamos los dos subgrafos de seguimiento de 2018 frente a tres cortes de audiencia compartida: el dataset de interacciones en vivo de \textbf{Kaggle} (subido en 2023, pero cuya cúpula de \textit{hubs} ---\texttt{shroud}, \texttt{ninja}, \texttt{tfue}--- evidencia que la captura real corresponde a $\sim 2019$) y las redes de \textbf{GitHub Overlap} de diciembre de 2021 y enero de 2022.
+
+\begin{table}[H]
+\centering
+\caption{Evolución estructural de las redes de Twitch (2018--2022).}
+\label{tab:evolucion}
+\setlength{\tabcolsep}{4pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}lrrrrrrrrrrr@{}}
+\toprule
+\textbf{Corte temporal / Red} & \textbf{Nodos} & \textbf{Aristas} & \textbf{Dens.\%} & \textbf{G.\,Med} & $\mathbf{CV}$ & \textbf{Clust.} & \textbf{Dist.} & \textbf{Diam.} & \textbf{Par.\%} & \textbf{Com.} & \textbf{Cliq.} \\
+\midrule
+2018 SNAP (\texttt{PT}) & $2\,536$ & $42\,952$ & $1,34$ & $33,9$ & $1,84$ & $0,3031$ & $2,64$ & $7$ & $93,9$ & $15$ & $K_{18}$ \\
+2018 SNAP (\texttt{ES}) & $5\,699$ & $85\,893$ & $0,53$ & $30,1$ & $1,93$ & $0,2247$ & $2,87$ & $8$ & $95,0$ & $31$ & $K_{18}$ \\
+$\sim 2019$ Kaggle (Bruto $\ge 5$) & $1\,000$ & $65\,799$ & $13,17$ & $131,6$ & $0,84$ & $0,7278$ & $1,90$ & $3$ & $89,3$ & $4$ & $K_{75}$ \\
+$\sim 2019$ Kaggle (Top-15) & $1\,000$ & $12\,077$ & $2,42$ & $24,2$ & $1,12$ & $0,7318$ & $2,92$ & $6$ & $87,9$ & $11$ & $K_{15}$ \\
+Dic.\ 2021 Overlap (Top-15) & $1\,150$ & $7\,052$ & $1,07$ & $12,3$ & $1,26$ & $0,7291$ & $4,25$ & $10$ & $88,9$ & $17$ & $K_{13}$ \\
+Ene.\ 2022 Overlap (Top-15) & $1\,682$ & $10\,950$ & $0,77$ & $13,0$ & $1,28$ & $0,6988$ & $4,50$ & $10$ & $87,4$ & $21$ & $K_{13}$ \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+La Tabla~\ref{tab:evolucion} arroja tres conclusiones claras:
+\begin{enumerate}[leftmargin=*, itemsep=2pt]
+  \item \textbf{Salto constructivo en Clustering ($0,22\text{--}0,30 \to 0,70\text{--}0,73$):} En una proyección bipartita, cada grupo de espectadores que participa simultáneamente en $k$ canales induce de forma automática un clique $K_k$ con $\binom{k}{2}$ aristas y numerosos triángulos, multiplicando el agrupamiento local frente a la red de seguimiento de 2018.
+  \item \textbf{Efecto de la saturación y necesidad de poda:} En Kaggle sin límite de enlaces por nodo ($\ge 5$ espectadores comunes), la red se satura ($13,17\%$ de densidad, $4$ comunidades y un clique gigante $K_{75}$). Al aplicar la poda \texttt{Top-15} (conservando las $15$ conexiones más fuertes por canal, igual que en 2021--2022), se recupera la estructura dispersa ($11$ comunidades, diámetro $6$) manteniendo intacto el clustering ($0,7318$).
+  \item \textbf{El vuelco del Autovector en enero de 2022 (auge hispano):} Mientras el canadiense \texttt{xqcow} lidera globalmente en Grado ($246$) e Intermediación ($0,3645$) ---acompañado como puentes internacionales por canales de \textit{esports} como \texttt{s1mple}, \texttt{lec} y \texttt{lck\_korea}---, \textbf{el Top~5 mundial de Autovector en enero de 2022 pasa a ser íntegramente hispano}: \texttt{ibai} ($0,2721$), \texttt{elxokas} ($0,2663$), \texttt{thegrefg} ($0,2641$), \texttt{rubius} ($0,2468$) y \texttt{auronplay} ($0,2432$), con picos de $739\,781$ espectadores compartidos entre \texttt{ibai} y \texttt{thegrefg}. Aunque \texttt{xqcow} enlaza con más canales dispersos, la cohesión interna del bloque hispano concentra el autovector dominante de toda la plataforma.
+\end{enumerate}
+
+% Descomenta este bloque si generas la figura datos/salidas/grafica_nucleo_2022.png
+% \begin{figure}[H]
+%   \centering
+%   \includegraphics[width=0.78\textwidth]{datos/salidas/grafica_nucleo_2022.png}
+%   \caption{Núcleo de los 45 streamers más conectados en enero de 2022, coloreados por comunidad y escalados según su centralidad de autovector.}
+%   \label{fig:nucleo_2022}
+% \end{figure}
+
+% ==============================================================================
+\section{Demostraciones constructivas y aplicación divulgativa}
+% ==============================================================================
+
+Para ilustrar de forma verificable los fundamentos algorítmicos del trabajo, realizamos dos comprobaciones constructivas paso a paso:
+\begin{itemize}[leftmargin=*, itemsep=2pt]
+  \item \textbf{Reducción de Havel--Hakimi sobre la cúpula de \texttt{ES} 2018:} Extraemos el subgrafo inducido por los $6$ mayores \textit{hubs} (\texttt{25951}, \texttt{31958}, \texttt{151558}, \texttt{8555}, \texttt{151200} y \texttt{49235}), verificamos que su matriz de adyacencia es cuadrada, simétrica y de diagonal nula, y reducimos constructivamente su secuencia de grados:
+  \[
+    [5,5,3,3,2,2] \longrightarrow [4,2,2,1,1] \longrightarrow [1,1,0,0] \longrightarrow [0,0,0].
+  \]
+  Esto confirma que la secuencia es gráfica y revela que los dos líderes de grado $5$ están conectados entre sí y con todos los demás miembros de la cúpula. De igual modo, en los $6$ mayores \textit{hubs} de \texttt{PT} la secuencia $[4,4,4,4,4,2]$ se reduce en cuatro pasos a $[0,0]$.
+  \item \textbf{Partición constructiva de Girvan--Newman:} Sobre un grafo didáctico de $8$ vértices compuesto por dos bloques densos unidos por una única arista puente $(3,4)$, el cálculo exacto de intermediación de aristas asigna $4 \times 4 = 16,0$ caminos mínimos a $(3,4)$ (frente a un máximo de $7,5$ en las demás). Su eliminación divide inmediatamente el grafo en dos comunidades de tamaño $4$ (Figura~\ref{fig:girvan}).
+\end{itemize}
+
+\begin{figure}[H]
+  \centering
+  \begin{subfigure}[b]{0.45\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{datos/salidas/grafica_4a_girvan_antes.png}
+    \caption{Grafo inicial con arista puente $(3,4)$.}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[b]{0.45\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{datos/salidas/grafica_4b_girvan_despues.png}
+    \caption{Partición en dos comunidades $[4,4]$.}
+  \end{subfigure}
+  \caption{Demostración constructiva de una iteración del algoritmo de Girvan--Newman.}
+  \label{fig:girvan}
+\end{figure}
+
+Como complemento divulgativo, hemos desarrollado la aplicación web interactiva \texttt{app\_twitch.py} en \textit{Streamlit}. La herramienta permite alternar en tiempo real entre los datasets (2018--2022), explorar visualmente las comunidades y rankings de cada medida de centralidad, simular fallos aleatorios o ataques dirigidos sobre \textit{hubs} y puentes, y ejecutar en vivo las demostraciones constructivas de Girvan--Newman, proyección bipartita y Havel--Hakimi.
+
+% Descomenta este bloque cuando guardes una captura en datos/salidas/captura_app.png
+% \begin{figure}[H]
+%   \centering
+%   \includegraphics[width=0.88\textwidth]{datos/salidas/captura_app.png}
+%   \caption{Interfaz interactiva de la aplicación divulgativa \texttt{app\_twitch.py} en \textit{Streamlit}.}
+%   \label{fig:app}
+% \end{figure}
+
+% ==============================================================================
+\section{Trazabilidad y verificación crítica del uso de la IA}
+% ==============================================================================
+
+Siguiendo el protocolo de transparencia académica de la asignatura, detallamos el proceso seguido:
+\begin{enumerate}[leftmargin=*, itemsep=2pt]
+  \item \textbf{Intento inicial sin IA:} Partimos de las técnicas trabajadas en las prácticas de MATI (\texttt{degree\_\allowbreak sequence}, \texttt{find\_\allowbreak fit}, modelos \texttt{GNM}/\texttt{GNP}/\texttt{BA}/\texttt{HK}, \texttt{centrality\_\allowbreak betweenness} y \texttt{centrality\_\allowbreak closeness}) para analizar inicialmente el subgrafo \texttt{PT} de SNAP y formular las hipótesis sobre idiomas y evolución temporal.
+  \item \textbf{Uso de la IA explicado:} Utilizamos modelos de IA generativa (Gemini) mediante \textit{prompts} iterativos para automatizar el recorrido de los $21$ idiomas sobre $6,79$\,M de aristas, implementar Bonacich mediante matrices dispersas, procesar las proyecciones bipartitas de Kaggle y GitHub, y maquetar la interfaz de \texttt{app\_twitch.py}.
+  \item \textbf{Discusión crítica y errores detectados y corregidos:}
+  \begin{itemize}[leftmargin=*, itemsep=1pt]
+    \item \textit{Centralidad de autovector y orden de vértices en Bonacich:} El código inicial invocaba \texttt{eigenvector\_\allowbreak centrality()} directamente sobre un objeto \texttt{Graph}, provocando \texttt{AttributeError} en \textit{SageMath}. Se corrigió usando \texttt{nx.\allowbreak eigenvector\_\allowbreak centrality()} y, en Bonacich, forzando \texttt{sorted()} sobre los vértices para garantizar la correspondencia exacta con las filas de la matriz de adyacencia.
+    \item \textit{Truncamiento artificial en modelos aleatorios:} Una versión preliminar limitaba $m_{\text{modelo}} = \min(10, \text{round}(m/n))$, produciendo grafos \texttt{BA}/\texttt{HK} con $25\,260$ aristas en lugar de $42\,952$. Al eliminar el tope ($m = 17$ en \texttt{PT} y $m = 15$ en \texttt{ES}) se igualó el grado medio real.
+    \item \textit{Conflictos con el preprocesador de SageMath:} Se corrigió el uso de la variable \texttt{D} (reservada al operador derivada \texttt{DerivativeOperator}), el formateo de fracciones \texttt{Rational} con \texttt{float()} y la restricción de dominio en \texttt{find\_fit} mediante \texttt{abs(x - c)\textasciicircum b}.
+    \item \textit{Datación real y saturación de Kaggle:} Comprobamos que el fichero \texttt{full\_a.csv}, aunque alojado en Kaggle en 2023, refleja la cohorte de $\sim 2019$ (\texttt{ninja}, \texttt{shroud}, \texttt{tfue}), y que sin poda \texttt{Top-15} la proyección bipartita satura la red ($13,17\%$, $K_{75}$).
+  \end{itemize}
+  \item \textbf{Ampliación del problema:} Extendimos el estudio al subgrafo completo de España (\texttt{ES} 2018), la comparativa de los $21$ idiomas, la evolución temporal 2018--2022, los experimentos de ataque dirigido y la aplicación interactiva en \textit{Streamlit}.
+\end{enumerate}
+
+% ==============================================================================
+\section{Conclusiones}
+% ==============================================================================
+
+El estudio confirma que las redes de Twitch exhiben una topología de \textbf{mundo pequeño invariante de escala} (diámetro entre $7$ y $8$ saltos al duplicar la población, con un agrupamiento de $22\times$ a $41\times$ superior al azar), una desigualdad extrema que dispara la \textbf{Paradoja de la Amistad} hasta el $94\text{--}95\%$ y una marcada \textbf{segregación lingüística} ($r = 0,6254$). Asimismo, hemos demostrado que distintas medidas de centralidad capturan roles reales diferentes ---desde la validación de \texttt{views} mediante Bonacich en España hasta los conectores ocultos de intermediación--- y que el paso de redes de seguimiento mutuo (2018) a proyecciones bipartitas de audiencia en vivo (2019--2022) duplica el \textit{clustering} por inducción de cliques y refleja fenómenos sociales reales como el auge del bloque hispano en enero de 2022.
+
+% ==============================================================================
+\begin{thebibliography}{99}
+% ==============================================================================
+
+\bibitem{barabasi1999}
+Barabási, A.-L., \& Albert, R. (1999). Emergence of scaling in random networks. \textit{Science}, 286(5439), 509--512.
+
+\bibitem{clauset2009}
+Clauset, A., Shalizi, C.~R., \& Newman, M.~E.~J. (2009). Power-Law Distributions in Empirical Data. \textit{SIAM Review}, 51(4), 661--703.
+
+\bibitem{dijkstra1959}
+Dijkstra, E.~W. (1959). A note on two problems in connexion with graphs. \textit{Numerische Mathematik}, 1(1), 269--271.
+
+\bibitem{hakimi1962}
+Hakimi, S.~L. (1962). On realizability of a set of integers as degree sequences of the vertices of a graph. \textit{J.\ SIAM}, 10(3), 496--506.
+
+\bibitem{holme2002}
+Holme, P., \& Kim, B.~J. (2002). Growing scale-free networks with tunable clustering. \textit{Physical Review E}, 65(2), 026107.
+
+\bibitem{newman2003}
+Newman, M.~E.~J. (2003). Mixing patterns in networks. \textit{Physical Review E}, 67(2), 026126.
+
+\bibitem{reyes2026}
+Reyes, P., \& Garijo, D. (2026). \textit{Repaso de Matemática Discreta y Teoría de Grafos (MATI)}. Dpto.\ de Matemática Aplicada I, Universidad de Sevilla.
+
+\bibitem{rozemberczki2021}
+Rozemberczki, B., \& Sarkar, R. (2021). Twitch Gamers: a Dataset for Evaluating Proximity Preserving and Structural Role-based Node Embeddings. \textit{arXiv:2101.03091} (SNAP, Stanford University).
+
+\bibitem{watts1998}
+Watts, D.~J., \& Strogatz, S.~H. (1998). Collective dynamics of `small-world' networks. \textit{Nature}, 393(6684), 440--442.
+
+\end{thebibliography}
+
+\end{document}
